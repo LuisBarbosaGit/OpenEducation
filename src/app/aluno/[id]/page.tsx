@@ -11,7 +11,7 @@ export default function studentpage({id} : studentPageProps){
            <nav className="flex justify-between m-3  font-Roboto" >
             <div className="flex items-center gap-1">
                 <img src="/logo.webp" alt="" className="w-15 h-15" />
-                <h1 className="text-2xl font-medium">EduCHat</h1>
+                <h1 className="text-2xl font-medium">EduChat</h1>
             </div>
             <div>
                 <div className="flex items-center">

@@ -1,6 +1,4 @@
 import { ArrowUpLeft } from "lucide-react";
-import { Children } from "react";
-
 
 type SubejectCardProps = {
     tittle : string,

@@ -1,3 +1,6 @@
+"use client";
+import { Navbar } from "./components/Navbar/navbar";
+import { SidebarProvider } from "./contexts/sidebar.context";
 import "./globals.css";
 
 export default function RootLayout({
@@ -7,10 +10,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-br">
-      <body
-        className={` antialiased`}
-      >
-        {children}
+      <body className={` antialiased`}>
+        <SidebarProvider>
+          <Navbar />
+          {children}
+        </SidebarProvider>
       </body>
     </html>
   );

@@ -2,7 +2,7 @@ import "dotenv/config";
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_BASE_URL,
+  baseURL: 'https://mcxzevnyid.execute-api.us-east-1.amazonaws.com/',
   headers: {
     "Content-Type": "application/json",
   },

@@ -44,6 +44,7 @@ export const App = () => {
         console.log(data.data)
         const messageData = data.data;
         setResponse(messageData.response);
+        console.log(response);
         setIsLoading(false);
 
         //Save question before reset textArea
@@ -73,11 +74,11 @@ export const App = () => {
             <p className="bg-stone-600 text-stone-200 rounded-2xl p-[0.7rem]">{prevQuestion.current}</p> 
           </div>
           {response.message ?
-            <p>{response.message}</p>
+            <div className="flex justify-end w-full items-center">
+              <p className="bg-stone-700 text-red-500  font-onest rounded-2xl p-[0.7rem]">Não foi possível processar sua resposta :(</p> 
+            </div>  
           :
-          <div className="flex justify-end w-full items-center">
-            <p className="bg-stone-700 text-red-500  font-onest rounded-2xl p-[0.7rem]">Não foi possível processar sua resposta :(</p> 
-          </div>
+            <p>{response.response}</p>
           }
         </div> 
         : 

@@ -1,4 +1,4 @@
-import axios from "axios";
+
 import { LoaderCircleIcon, SendHorizonalIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react"
 import type { responseModel } from "./models/response-model";
@@ -10,6 +10,7 @@ export const App = () => {
    
   const question = useRef<HTMLTextAreaElement>(null);
   const [response, setResponse] = useState<responseModel | null>();
+  const [dataStream, setDataStream] = useState('');
   const [error, setError] = useState<string[]>();
   const prevQuestion = useRef('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -18,6 +19,7 @@ export const App = () => {
     if (question.current) {
       question.current.style.height = "auto";
       question.current.style.height = `${question.current.scrollHeight}px`;
+      console.log(question.current.style.height)
     }
   }
 
@@ -37,30 +39,42 @@ export const App = () => {
       try {
         setIsLoading(true);
 
-        const data = await axios.post('http://localhost:3000/query',{
-          query : question.current?.value
-        }
-        );
-        console.log(data.data)
-        const messageData = data.data;
-        setResponse(messageData.response);
-        console.log(response);
-        setIsLoading(false);
+        const streamResponse = await fetch('http://localhost:3000/query', {
+          method: 'POST',
+          headers: {'Content-Type' : 'application/json'},
+          body: JSON.stringify({query: question.current?.value})
+        })
 
+        const reader = streamResponse.body?.getReader();
+        const decoder = new TextDecoder();
+        if (!reader){
+          return
+        }
+        while (true) {
+          const {done, value} = await reader.read();
+          if(done){
+            break;
+          }
+          const chunk = decoder.decode(value, {stream : true});
+          const objChunk = JSON.parse(chunk)
+          setDataStream(objChunk.message);
+          setResponse({message: 'Sucess', response: dataStream});
+          console.log(response)
+        }
+        
+      } catch (error) {
+        console.log(error)
+
+      }finally {
         //Save question before reset textArea
         if (question.current) {
           prevQuestion.current = question.current.value;
           question.current.value = '';
         }
-      } catch (error) {
-        console.log(error)
+        setIsLoading(false);
       }
     }
   }
-
-  useEffect(() => {
-    redimensionTextArea();
-  }, [question.current])
 
   return (
     <>
@@ -73,33 +87,36 @@ export const App = () => {
           <div className="flex justify-baseline w-full items-center">
             <p className="bg-stone-600 text-stone-200 rounded-2xl p-[0.7rem]">{prevQuestion.current}</p> 
           </div>
-          {response.message ?
+          {response.response ?
+            <div className="flex justify-end w-full items-center">
+              <p className=" w-[80%]font-onest bg-stone-700 rounded-xl p-0.5">{response.response}</p>  
+            </div>
+          :
             <div className="flex justify-end w-full items-center">
               <p className="bg-stone-700 text-red-500  font-onest rounded-2xl p-[0.7rem]">Não foi possível processar sua resposta :(</p> 
-            </div>  
-          :
-            <p>{response.response}</p>
+            </div> 
           }
         </div> 
         : 
         <div className="flex items-center flex-col justify-center gap-2 m-2">
-          <h1 className="text-7xl text-stone-200 font-bold font-onest m-2">Seja bem vindo!</h1>
+          <h1 className="text-7xl text-stone-200 font-bold font-onest m-2">Seja bem <span className="text-blue-700 font-caprasimo">Vindo!</span></h1>
           <p className="text-xl text-gray-300 font-onest">Insira sua pergunta para começar</p> 
         </div>}
         <form action="submit" id="formMain" onSubmit={(e) => {handleFormSubmit(e)}} className="flex flex-col">
-          <div>
-            <label about="query" className="flex border-2 border-stone-500  bg-stone-600 rounded-3xl items-center max-h-60 min-h-6 overflow-y-auto shadow-md shadow-stone-600  ">
+          <div className="max-h-60 overflow-y-auto">
+            <label about="query" className="flex border-3 border-stone-400  bg-stone-600 rounded-3xl items-center max-h-60 min-h-6 overflow-y-auto  ">
               <textarea
                 className="focus:outline-none focus:text-white transition-all focus:placeholder:text-stone-800 placeholder:text-stone-300 duration-100 ease-in bg-stone-600 text-center font-roboto w-[45rem] text-stone-300  overflow-hidden resize-none  leading-tight text-lg py-3"
                 placeholder="Digite sua pergunta"
                 ref={question}
                 rows={1}
                 id="query"
+                onInput={redimensionTextArea}
               />
               <div className="flex h-full items-end p-1">
                 {!!!isLoading ?
                   <button
-                    className=" bg-stone-700 text-stone-400 p-[0.60rem] rounded-2xl ml-2 cursor-pointer shadow-stone-600"
+                    className=" bg-stone-700 text-stone-300 p-[0.60rem] rounded-2xl ml-2 cursor-pointer shadow-stone-400"
                     type="submit"
                   >
                     <SendHorizonalIcon size={27}/>

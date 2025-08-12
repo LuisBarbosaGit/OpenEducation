@@ -11,7 +11,7 @@ export const App = () => {
   const question = useRef<HTMLTextAreaElement>(null);
   const [response, setResponse] = useState<responseModel | null>();
   const [dataStream, setDataStream] = useState('');
-  const [error, setError] = useState<string[]>();
+  const [error, setError] = useState<string>();
   const prevQuestion = useRef('');
   const [readyAnimated , setReadAnimated] = useState(false)
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -24,17 +24,26 @@ export const App = () => {
     }
   }
 
-  async function handleFormSubmit(e : React.FormEvent<HTMLFormElement>){
-    e.preventDefault();
+  async function resetStates() {
     setError(undefined);
     setResponse(null);
+    setDataStream('');
+    setReadAnimated(false);
+  }
+
+  async function handleFormSubmit(e : React.FormEvent<HTMLFormElement>){
+    e.preventDefault();
+    resetStates();
+    //Zod Validation
     const validationResponse = responseSchema.safeParse({message : question.current?.value});
     if (!validationResponse.success){
       const error = z.flattenError(validationResponse.error);
-      setError(error.fieldErrors.message);
+      setError(error.fieldErrors.message?.toString());
     } else {
+
       try {
         setIsLoading(true);
+        //WebStream
         const streamResponse = await fetch('http://localhost:3000/query', {
           method: 'POST',
           headers: {'Content-Type' : 'application/json'},
@@ -57,6 +66,7 @@ export const App = () => {
         }
       } catch (error) {
         console.log(error)
+        setError('Erro durante o processamento da resposta :(')
       }finally {
         //Save question before reset textArea
         if (question.current) {
@@ -69,27 +79,26 @@ export const App = () => {
   }
 
   useEffect(() => {
+    //Typing Animation
+    let animatedMessage ='';
+    let index = 0;
     if (readyAnimated && dataStream) {
       setResponse({ response: '', code: '', message : '' });
-      let index = 0;
-      const messageToType = dataStream;
+
       const intervalId = setInterval(() => {
-        if (index >  messageToType.length) {
-          console.log(messageToType[index])
-          clearInterval(intervalId);
-          return;
-        }
+        animatedMessage += dataStream[index];
         setResponse(prevState => ({
           ...prevState,
-          response: prevState?.response + messageToType[index]
+          response: animatedMessage
         }));
         index++
-        if (index === messageToType.length) {
+        if (index === dataStream.length) {
           clearInterval(intervalId);
+          return 
         }
       }, 50);
+
       return () => clearInterval(intervalId);
-      
     }
   }, [readyAnimated]);
 
@@ -105,7 +114,7 @@ export const App = () => {
           <div className="flex justify-baseline w-full items-center">
             <p className="bg-stone-600 text-stone-200 rounded-2xl p-[0.7rem]">{prevQuestion.current}</p> 
           </div>
-          {response.response ?
+          {readyAnimated && dataStream ?
             <div className="flex justify-end w-full items-center">
               <p className=" max-w-[80%] font-onest flex text-justify flex-wrap bg-stone-700 rounded-xl p-2">{response.response}</p>  
             </div>

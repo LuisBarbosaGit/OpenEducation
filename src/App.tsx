@@ -13,6 +13,7 @@ export const App = () => {
   const [dataStream, setDataStream] = useState('');
   const [error, setError] = useState<string[]>();
   const prevQuestion = useRef('');
+  const [readyAnimated , setReadAnimated] = useState(false)
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const redimensionTextArea = () => {
@@ -21,10 +22,6 @@ export const App = () => {
       question.current.style.height = `${question.current.scrollHeight}px`;
       console.log(question.current.style.height)
     }
-  }
-
-  async function handleStopClick() {
-    
   }
 
   async function handleFormSubmit(e : React.FormEvent<HTMLFormElement>){
@@ -38,13 +35,11 @@ export const App = () => {
     } else {
       try {
         setIsLoading(true);
-
         const streamResponse = await fetch('http://localhost:3000/query', {
           method: 'POST',
           headers: {'Content-Type' : 'application/json'},
           body: JSON.stringify({query: question.current?.value})
         })
-
         const reader = streamResponse.body?.getReader();
         const decoder = new TextDecoder();
         if (!reader){
@@ -53,18 +48,15 @@ export const App = () => {
         while (true) {
           const {done, value} = await reader.read();
           if(done){
+            setReadAnimated(true)
             break;
           }
           const chunk = decoder.decode(value, {stream : true});
           const objChunk = JSON.parse(chunk)
           setDataStream(objChunk.message);
-          setResponse({message: 'Sucess', response: dataStream});
-          console.log(response)
         }
-        
       } catch (error) {
         console.log(error)
-
       }finally {
         //Save question before reset textArea
         if (question.current) {
@@ -75,6 +67,32 @@ export const App = () => {
       }
     }
   }
+
+  useEffect(() => {
+    if (readyAnimated && dataStream) {
+      setResponse({ response: '', code: '', message : '' });
+      let index = 0;
+      const messageToType = dataStream;
+      const intervalId = setInterval(() => {
+        if (index >  messageToType.length) {
+          console.log(messageToType[index])
+          clearInterval(intervalId);
+          return;
+        }
+        setResponse(prevState => ({
+          ...prevState,
+          response: prevState?.response + messageToType[index]
+        }));
+        index++
+        if (index === messageToType.length) {
+          clearInterval(intervalId);
+        }
+      }, 50);
+      return () => clearInterval(intervalId);
+      
+    }
+  }, [readyAnimated]);
+
 
   return (
     <>
@@ -89,7 +107,7 @@ export const App = () => {
           </div>
           {response.response ?
             <div className="flex justify-end w-full items-center">
-              <p className=" w-[80%]font-onest bg-stone-700 rounded-xl p-0.5">{response.response}</p>  
+              <p className=" max-w-[80%] font-onest flex text-justify flex-wrap bg-stone-700 rounded-xl p-2">{response.response}</p>  
             </div>
           :
             <div className="flex justify-end w-full items-center">
@@ -124,7 +142,6 @@ export const App = () => {
                   :
                   <button
                     className=" bg-stone-700 text-stone-400 p-[0.60rem] rounded-2xl ml-2 cursor-pointer shadow-stone-600 "
-                    onClick={handleStopClick}
                   >
                     <LoaderCircleIcon className="animate-spin text-white" size={28}></LoaderCircleIcon>
                   </button>

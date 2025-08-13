@@ -49,9 +49,23 @@ export const Home = () => {
         try {
             setIsLoading(true);
             if (flagItem.itemIndex == null) {
-              const response  = await new MainServices().responseService(question.current?.value as string)
-              console.log(response) 
-              setDataStream(response);
+              const stream  = await new MainServices().responseService(question.current?.value as string)
+              if (!stream) {return}
+              const reader = stream.getReader();
+              const decoder = new TextDecoder();
+              if (!reader){
+                  return
+              }
+              while (true) {
+                  const {done, value} = await reader.read();
+                  if(done){
+                      break;
+                  }
+                  const chunk = decoder.decode(value, {stream : true});
+                  const objChunk = JSON.parse(chunk);
+                  console.log(objChunk.message)
+                  setDataStream(objChunk.message); 
+              }
             }
             setReadAnimated(true);
         } catch (error) {
@@ -99,12 +113,12 @@ export const Home = () => {
       <a href="" className="text-stone-100 font-onest font-bold">H<span className="text-blue-400">PRO</span></a>
     </div>
       <div className="flex h-screen w-screen items-center flex-col justify-center bg-stone-800 gap-4">
-        {response ? 
+        {response && !!isLoading ? 
         <div className="flex items-center justify-center transition-all duration-100 ease-in gap-5 text-stone-100 flex-col font-roboto max-h-full w-[50%] p-2">
           <div className="flex justify-baseline w-full items-center">
             <p className="bg-stone-600 text-stone-200 rounded-2xl p-[0.7rem]">{prevQuestion.current}</p> 
           </div>
-          {readyAnimated && dataStream ?
+          {readyAnimated && dataStream && response.response ?
             <div className="flex justify-end w-full items-center">
               <p className=" max-w-[80%] font-onest flex text-justify flex-wrap bg-stone-700 rounded-xl p-2">{response.response}</p>  
             </div>

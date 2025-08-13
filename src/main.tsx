@@ -2,12 +2,14 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import { App } from './App.tsx'
-import { SideBarProvider } from './components/Sidebar/SideBar.tsx'
+import { FlagMenuProvider } from './components/DropDownMenuProvider/DropDownMenuProvider.tsx'
+
+
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <SideBarProvider>
+    <FlagMenuProvider>
       <App />
-    </SideBarProvider>
+    </FlagMenuProvider> 
   </StrictMode>,
 )

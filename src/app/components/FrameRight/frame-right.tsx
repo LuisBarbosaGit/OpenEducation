@@ -15,6 +15,7 @@ import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { avatarOptions } from "./options";
 import { AvatarFallback } from "@radix-ui/react-avatar";
 import { Textarea } from "@/components/ui/textarea";
+import { LoaderCircle } from "lucide-react";
 
 const inputSchema = z.object({
   message: z.string().min(1, "A mensagem não pode estar vazia"),
@@ -98,7 +99,18 @@ export const FrameRight = ({}) => {
           className="flex items-center justify-center w-3/5"
           onSubmit={handleSubmit(onSubmit)}
         >
-          <Input className="w-full h-20" type="text" {...register("message")} />
+          <div className="w-full h-20 relative flex items-center">
+            <Input
+              className="w-full h-20 pr-12"
+              type="text"
+              {...register("message")}
+            />
+            {loading && (
+              <span className="absolute right-4 top-1/2 -translate-y-1/2">
+                <LoaderCircle className="size-6 animate-spin" />
+              </span>
+            )}
+          </div>
         </form>
         <DialogContent>
           <DialogHeader>
